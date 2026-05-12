@@ -88,7 +88,7 @@ export default async function Home({ searchParams }: HomeProps) {
 
       <Link
         href="/recipes/new"
-        className="fixed bottom-6 right-6 flex h-14 w-14 items-center justify-center rounded-full bg-cottage-text text-2xl font-bold text-cottage-bg shadow-lg shadow-cottage-text/40 transition-transform active:scale-90"
+        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-cottage-text text-2xl font-bold text-cottage-bg shadow-lg shadow-cottage-text/40 transition-transform active:scale-90"
       >
         +
       </Link>

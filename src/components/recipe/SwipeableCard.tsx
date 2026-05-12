@@ -87,7 +87,7 @@ export function SwipeableCard({ children, onDelete }: SwipeableCardProps) {
   };
 
   return (
-    <div ref={cardRef} className="relative rounded-xl">
+    <div ref={cardRef} className="relative overflow-hidden rounded-xl">
       {/* 삭제 영역 — 전체 배경으로 깔고 카드가 위에서 밀림 */}
       <div
         className={`absolute inset-0 flex items-center justify-end rounded-xl bg-red-500 transition-opacity ${

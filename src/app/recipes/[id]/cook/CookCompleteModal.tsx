@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 
 interface CookCompleteModalProps {
@@ -37,7 +38,7 @@ export function CookCompleteModal({ onComplete, onClose }: CookCompleteModalProp
         </div>
         <div className="flex gap-3">
           <Button onClick={handleSkip} disabled={saving} variant="outline" className="h-12 flex-1 rounded-xl border-cottage-border text-base font-semibold text-cottage-text-sub">건너뛰기</Button>
-          <Button onClick={handleSave} disabled={saving} className="h-12 flex-1 rounded-xl bg-cottage-text text-base font-semibold text-cottage-bg hover:bg-cottage-text/90">{saving ? "저장 중..." : "저장"}</Button>
+          <Button onClick={handleSave} disabled={saving} className="h-12 flex-1 rounded-xl bg-cottage-text text-base font-semibold text-cottage-bg hover:bg-cottage-text/90">{saving ? <><Spinner size="sm" /> 저장 중...</> : "저장"}</Button>
         </div>
         <button onClick={onClose} disabled={saving} className="mt-3 w-full py-2 text-sm text-cottage-text-muted active:text-cottage-text-sub">계속 요리하기</button>
       </div>

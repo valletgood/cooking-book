@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -105,6 +105,14 @@ export function CookMode({ recipeId, recipeTitle, steps, ingredients, initialSte
 
   const progressPercent = ((currentIndex + 1) / totalSteps) * 100;
 
+  // 현재 단계에서 사용되는 재료 매칭
+  const usedIngredients = useMemo(() => {
+    const instruction = currentStep.instruction;
+    const tip = currentStep.tip ?? "";
+    const text = `${instruction} ${tip}`;
+    return ingredients.filter((ing) => text.includes(ing.name));
+  }, [currentStep, ingredients]);
+
   return (
     <div className="flex h-full flex-col bg-cottage-bg" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       <header className="bg-cottage-bg px-4 pb-3 pt-4">
@@ -156,6 +164,20 @@ export function CookMode({ recipeId, recipeTitle, steps, ingredients, initialSte
       )}
 
       <main className="flex flex-1 flex-col items-center justify-center px-8">
+        {/* 이 단계에서 사용되는 재료 */}
+        {usedIngredients.length > 0 && (
+          <div className="mb-5 flex flex-wrap justify-center gap-2">
+            {usedIngredients.map((ing) => (
+              <span
+                key={ing.id}
+                className="rounded-full bg-cottage-surface px-3 py-1 text-sm text-cottage-accent"
+              >
+                {ing.name} {ing.amount}{ing.unit ? ` ${ing.unit}` : ""}
+              </span>
+            ))}
+          </div>
+        )}
+
         <span className="mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-cottage-text text-xl font-bold text-cottage-bg">{currentStep.stepNumber}</span>
         <p className="text-center text-xl font-medium leading-relaxed text-cottage-text">{currentStep.instruction}</p>
         {currentStep.tip && (

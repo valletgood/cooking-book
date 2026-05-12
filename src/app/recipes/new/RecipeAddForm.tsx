@@ -15,6 +15,7 @@ export function RecipeAddForm() {
   const [parsed, setParsed] = useState<ParsedRecipe | null>(null);
   const [sourceType, setSourceType] = useState<"url" | "image">("url");
   const [sourceUrl, setSourceUrl] = useState<string>("");
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const handleParsed = (result: ParsedRecipe, type: "url" | "image", url?: string) => {
@@ -29,7 +30,12 @@ export function RecipeAddForm() {
     const res = await fetch("/api/recipes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...parsed, source_type: sourceType, source_url: sourceUrl || undefined }),
+      body: JSON.stringify({
+        ...parsed,
+        source_type: sourceType,
+        source_url: sourceUrl || undefined,
+        image_url: imageUrl || undefined,
+      }),
     });
     if (res.ok) {
       const data = await res.json();
@@ -43,10 +49,21 @@ export function RecipeAddForm() {
   const handleReset = () => {
     setParsed(null);
     setSourceUrl("");
+    setImageUrl(null);
   };
 
   if (parsed) {
-    return <ParsedRecipePreview recipe={parsed} onUpdate={setParsed} onSave={handleSave} onReset={handleReset} saving={saving} />;
+    return (
+      <ParsedRecipePreview
+        recipe={parsed}
+        onUpdate={setParsed}
+        onSave={handleSave}
+        onReset={handleReset}
+        saving={saving}
+        imageUrl={imageUrl}
+        onImageChange={setImageUrl}
+      />
+    );
   }
 
   return (

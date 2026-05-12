@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { CATEGORY_LABELS } from "@/lib/constants";
 import { RecipeEditForm, type EditableRecipe } from "@/components/recipe/RecipeEditForm";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Spinner } from "@/components/ui/spinner";
+import { ImageUpload } from "@/components/recipe/ImageUpload";
 
 interface RecipeDetailProps {
   recipe: {
@@ -53,15 +55,24 @@ export function RecipeDetail({ recipe, ingredients, steps, nutrition, cookingPro
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [editData, setEditData] = useState<EditableRecipe>(() => toEditable(recipe, ingredients, steps, nutrition));
+  const [editImageUrl, setEditImageUrl] = useState<string | null>(recipe.imageUrl);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  const handleEdit = () => { setEditData(toEditable(recipe, ingredients, steps, nutrition)); setEditing(true); };
+  const handleEdit = () => {
+    setEditData(toEditable(recipe, ingredients, steps, nutrition));
+    setEditImageUrl(recipe.imageUrl);
+    setEditing(true);
+  };
 
   const handleSave = async () => {
     setSaving(true);
-    const res = await fetch(`/api/recipes/${recipe.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(editData) });
+    const res = await fetch(`/api/recipes/${recipe.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...editData, image_url: editImageUrl }),
+    });
     if (res.ok) { setEditing(false); router.refresh(); }
     setSaving(false);
   };
@@ -82,11 +93,14 @@ export function RecipeDetail({ recipe, ingredients, steps, nutrition, cookingPro
             <h1 className="font-heading text-xl font-extrabold text-cottage-text">레시피 수정</h1>
           </div>
         </header>
-        <main className="flex-1 px-4 pb-28 pt-2"><RecipeEditForm recipe={editData} onUpdate={setEditData} /></main>
+        <main className="flex-1 space-y-3 px-4 pb-28 pt-2">
+          <ImageUpload imageUrl={editImageUrl} onImageChange={setEditImageUrl} />
+          <RecipeEditForm recipe={editData} onUpdate={setEditData} />
+        </main>
         <div className="fixed inset-x-0 bottom-0 bg-cottage-bg/95 px-4 pb-6 pt-3 backdrop-blur-sm">
           <div className="flex gap-3">
             <Button onClick={() => setEditing(false)} variant="outline" className="h-12 flex-1 rounded-xl border-cottage-border text-base font-semibold text-cottage-text-sub">취소</Button>
-            <Button onClick={handleSave} disabled={saving} className="h-12 flex-1 rounded-xl bg-cottage-text text-base font-semibold text-cottage-bg hover:bg-cottage-text/90">{saving ? "저장 중..." : "저장하기"}</Button>
+            <Button onClick={handleSave} disabled={saving} className="h-12 flex-1 rounded-xl bg-cottage-text text-base font-semibold text-cottage-bg hover:bg-cottage-text/90">{saving ? <><Spinner size="sm" /> 저장 중...</> : "저장하기"}</Button>
           </div>
         </div>
       </div>
@@ -169,7 +183,7 @@ export function RecipeDetail({ recipe, ingredients, steps, nutrition, cookingPro
 
       <div className="fixed inset-x-0 bottom-0 bg-cottage-bg/95 px-4 pb-6 pt-3 backdrop-blur-sm">
         <Link href={`/recipes/${recipe.id}/cook`} className="flex w-full items-center justify-center rounded-xl bg-cottage-text py-4 text-base font-semibold text-cottage-bg shadow-lg shadow-cottage-text/30 active:opacity-80">
-          {cookingProgress ? `이어서 요리하기 (${cookingProgress.currentStep}단계부터)` : "🍳 쿡 모드 시작"}
+          {cookingProgress ? `이어서 요리하기 (${cookingProgress.currentStep}단계부터)` : "🍳 요리 시작"}
         </Link>
       </div>
 

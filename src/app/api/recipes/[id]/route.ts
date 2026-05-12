@@ -109,6 +109,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
       title: body.title,
       description: body.description,
       category: body.category,
+      imageUrl: body.image_url ?? null,
       servings: body.servings,
       prepTime: body.prep_time,
       cookTime: body.cook_time,

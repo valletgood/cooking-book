@@ -125,7 +125,7 @@ export function CookMode({ recipeId, recipeTitle, steps, ingredients, initialSte
         </div>
 
         {/* 단계 점프 바 */}
-        <div className="mt-3 flex items-center gap-1.5 overflow-x-auto pb-1">
+        <div className="mt-3 flex items-center gap-1.5 overflow-x-auto px-1 py-1.5">
           {steps.map((_, i) => (
             <button
               key={i}
@@ -144,7 +144,12 @@ export function CookMode({ recipeId, recipeTitle, steps, ingredients, initialSte
         </div>
 
         <div className="mt-2 flex items-center gap-3">
-          <Progress value={progressPercent} className="h-2 flex-1 bg-cottage-warm" />
+          <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-cottage-warm">
+            <div
+              className="h-full rounded-full bg-primary transition-all duration-300"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
           <span className="shrink-0 text-xs font-bold text-cottage-text-sub">{currentIndex + 1} / {totalSteps}</span>
         </div>
       </header>
@@ -164,6 +169,8 @@ export function CookMode({ recipeId, recipeTitle, steps, ingredients, initialSte
       )}
 
       <main className="flex flex-1 flex-col items-center justify-center px-8">
+        <span className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-cottage-text text-xl font-bold text-cottage-bg">{currentStep.stepNumber}</span>
+
         {/* 이 단계에서 사용되는 재료 */}
         {usedIngredients.length > 0 && (
           <div className="mb-5 flex flex-wrap justify-center gap-2">
@@ -178,7 +185,6 @@ export function CookMode({ recipeId, recipeTitle, steps, ingredients, initialSte
           </div>
         )}
 
-        <span className="mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-cottage-text text-xl font-bold text-cottage-bg">{currentStep.stepNumber}</span>
         <p className="text-center text-xl font-medium leading-relaxed text-cottage-text">{currentStep.instruction}</p>
         {currentStep.tip && (
           <div className="mt-5 rounded-xl bg-cottage-surface px-5 py-3">

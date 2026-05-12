@@ -18,6 +18,12 @@ const gowunDodum = Gowun_Dodum({
 export const metadata: Metadata = {
   title: "CookingBook",
   description: "레시피를 찍고, AI가 정리하고, 따라 요리하세요",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "CookingBook",
+  },
 };
 
 export const viewport: Viewport = {
@@ -25,6 +31,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  themeColor: "#3D2C1E",
 };
 
 export default function RootLayout({

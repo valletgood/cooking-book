@@ -4,36 +4,29 @@ import { RecipeListClient } from "./RecipeListClient";
 import { db } from "@/db";
 import { recipes, recipeIngredients, cookLogs } from "@/db/schema";
 import { eq, desc, asc, sql, ilike } from "drizzle-orm";
+import { CATEGORY_LABELS } from "@/lib/constants";
 
 interface RecipeListProps {
   userId: string;
   q?: string;
-  category?: string;
   sort?: string;
 }
 
-async function getRecipes(userId: string, q?: string, category?: string, sort?: string) {
-  const conditions = [eq(recipes.userId, userId)];
-
-  if (category && category !== "all") {
-    conditions.push(eq(recipes.category, category));
-  }
+async function getRecipes(userId: string, q?: string, sort?: string) {
+  const baseWhere = eq(recipes.userId, userId);
 
   const whereClause = q
-    ? sql`${sql.join(conditions, sql` AND `)} AND (${ilike(recipes.title, `%${q}%`)} OR EXISTS (
+    ? sql`${baseWhere} AND (${ilike(recipes.title, `%${q}%`)} OR EXISTS (
         SELECT 1 FROM recipe_ingredients
         WHERE recipe_ingredients.recipe_id = ${recipes.id}
         AND ${ilike(recipeIngredients.name, `%${q}%`)}
       ))`
-    : sql`${sql.join(conditions, sql` AND `)}`;
+    : baseWhere;
 
   let orderBy;
   switch (sort) {
     case "name":
       orderBy = asc(recipes.title);
-      break;
-    case "cook_count":
-      orderBy = undefined; // 후처리로 정렬
       break;
     default:
       orderBy = desc(recipes.createdAt);
@@ -50,7 +43,7 @@ async function getRecipes(userId: string, q?: string, category?: string, sort?: 
     })
     .from(recipes)
     .where(whereClause)
-    .orderBy(orderBy ?? desc(recipes.createdAt));
+    .orderBy(orderBy);
 
   const withMeta = await Promise.all(
     recipeList.map(async (recipe) => {
@@ -81,8 +74,47 @@ async function getRecipes(userId: string, q?: string, category?: string, sort?: 
   return withMeta;
 }
 
-export async function RecipeList({ userId, q, category, sort }: RecipeListProps) {
-  const recipeList = await getRecipes(userId, q, category, sort);
+type RecipeWithMeta = Awaited<ReturnType<typeof getRecipes>>[number];
+
+function groupByCategory(list: RecipeWithMeta[]) {
+  const groups: Record<string, RecipeWithMeta[]> = {};
+
+  for (const recipe of list) {
+    const cat = recipe.category ?? "other";
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push(recipe);
+  }
+
+  // CATEGORY_LABELS 순서대로 정렬
+  const orderedKeys = Object.keys(CATEGORY_LABELS);
+  const sorted: { category: string; label: string; recipes: RecipeWithMeta[] }[] = [];
+
+  for (const key of orderedKeys) {
+    if (groups[key]) {
+      sorted.push({
+        category: key,
+        label: CATEGORY_LABELS[key],
+        recipes: groups[key],
+      });
+    }
+  }
+
+  // CATEGORY_LABELS에 없는 카테고리가 있으면 마지막에 추가
+  for (const key of Object.keys(groups)) {
+    if (!orderedKeys.includes(key)) {
+      sorted.push({
+        category: key,
+        label: key,
+        recipes: groups[key],
+      });
+    }
+  }
+
+  return sorted;
+}
+
+export async function RecipeList({ userId, q, sort }: RecipeListProps) {
+  const recipeList = await getRecipes(userId, q, sort);
 
   if (recipeList.length === 0) {
     return (
@@ -95,13 +127,9 @@ export async function RecipeList({ userId, q, category, sort }: RecipeListProps)
           className="h-auto"
         />
         <p className="text-center text-[0.95rem] text-cottage-text-sub">
-          {q
-            ? `"${q}" 검색 결과가 없어요`
-            : category && category !== "all"
-              ? "이 카테고리에 레시피가 없어요"
-              : "아직 저장된 레시피가 없어요"}
+          {q ? `"${q}" 검색 결과가 없어요` : "아직 저장된 레시피가 없어요"}
         </p>
-        {!q && !category && (
+        {!q && (
           <Link
             href="/recipes/new"
             className="mt-2 inline-flex h-12 items-center rounded-xl bg-cottage-text px-8 text-base font-semibold text-cottage-bg active:opacity-80"
@@ -113,5 +141,7 @@ export async function RecipeList({ userId, q, category, sort }: RecipeListProps)
     );
   }
 
-  return <RecipeListClient recipes={recipeList} />;
+  const groups = groupByCategory(recipeList);
+
+  return <RecipeListClient groups={groups} />;
 }

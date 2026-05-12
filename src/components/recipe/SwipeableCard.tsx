@@ -10,6 +10,7 @@ interface SwipeableCardProps {
 export function SwipeableCard({ children, onDelete }: SwipeableCardProps) {
   const [offsetX, setOffsetX] = useState(0);
   const [swiped, setSwiped] = useState(false);
+  const [swiping, setSwiping] = useState(false);
   const touchRef = useRef<{ startX: number; startY: number } | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const THRESHOLD = 80;
@@ -19,7 +20,6 @@ export function SwipeableCard({ children, onDelete }: SwipeableCardProps) {
     setOffsetX(0);
   };
 
-  // 다른 곳 클릭 시 닫기
   useEffect(() => {
     if (!swiped) return;
 
@@ -42,6 +42,7 @@ export function SwipeableCard({ children, onDelete }: SwipeableCardProps) {
       startX: e.touches[0].clientX,
       startY: e.touches[0].clientY,
     };
+    setSwiping(false);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -51,13 +52,16 @@ export function SwipeableCard({ children, onDelete }: SwipeableCardProps) {
 
     if (Math.abs(dy) > Math.abs(dx)) return;
 
+    // 수평 이동이 감지되면 스와이프 모드 진입
+    if (Math.abs(dx) > 5) {
+      setSwiping(true);
+    }
+
     if (swiped) {
-      // 열린 상태에서 우측 스와이프 → 닫기
       if (dx > 0) {
         setOffsetX(Math.min(-THRESHOLD + dx, 0));
       }
     } else {
-      // 닫힌 상태에서 좌측 스와이프 → 열기
       if (dx < 0) {
         setOffsetX(Math.max(dx, -THRESHOLD - 20));
       }
@@ -69,14 +73,12 @@ export function SwipeableCard({ children, onDelete }: SwipeableCardProps) {
     touchRef.current = null;
 
     if (swiped) {
-      // 열린 상태에서 일정 이상 우측으로 당겼으면 닫기
       if (offsetX > -THRESHOLD / 2) {
         handleClose();
       } else {
         setOffsetX(-THRESHOLD);
       }
     } else {
-      // 닫힌 상태에서 일정 이상 좌측으로 당겼으면 열기
       if (offsetX < -THRESHOLD) {
         setSwiped(true);
         setOffsetX(-THRESHOLD);
@@ -84,11 +86,21 @@ export function SwipeableCard({ children, onDelete }: SwipeableCardProps) {
         setOffsetX(0);
       }
     }
+
+    // 스와이프 후 잠시 링크 클릭 방지 유지
+    setTimeout(() => setSwiping(false), 50);
+  };
+
+  // 스와이프 중이면 링크 클릭 차단
+  const handleClickCapture = (e: React.MouseEvent) => {
+    if (swiping || offsetX !== 0) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
   };
 
   return (
     <div ref={cardRef} className="relative overflow-hidden rounded-xl">
-      {/* 삭제 영역 — 전체 배경으로 깔고 카드가 위에서 밀림 */}
       <div
         className={`absolute inset-0 flex items-center justify-end rounded-xl bg-red-500 transition-opacity ${
           offsetX < 0 ? "opacity-100" : "opacity-0 pointer-events-none"
@@ -105,13 +117,15 @@ export function SwipeableCard({ children, onDelete }: SwipeableCardProps) {
         </button>
       </div>
 
-      {/* 카드 본체 */}
       <div
-        className="relative z-10 transition-transform duration-200 ease-out"
+        className={`relative z-10 transition-transform duration-200 ease-out ${
+          !swiping && offsetX === 0 ? "active:scale-[0.98] active:opacity-90" : ""
+        }`}
         style={{ transform: `translateX(${offsetX}px)` }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
+        onClickCapture={handleClickCapture}
       >
         {children}
       </div>

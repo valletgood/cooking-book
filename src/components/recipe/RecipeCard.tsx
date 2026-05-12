@@ -22,7 +22,7 @@ export function RecipeCard({
 }: RecipeCardProps) {
   return (
     <Link href={`/recipes/${id}`}>
-      <Card className="flex gap-4 border-cottage-border/60 bg-white p-4 transition-all active:scale-[0.98] active:bg-cottage-bg">
+      <Card className="flex gap-4 border-cottage-border/60 bg-white p-4">
         <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-cottage-surface">
           {imageUrl ? (() => {
             let thumb = imageUrl;

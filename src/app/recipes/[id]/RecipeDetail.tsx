@@ -30,6 +30,7 @@ interface RecipeDetailProps {
   nutrition: { calories: number | null; carbohydrates: number | null; protein: number | null; fat: number | null; sodium: number | null } | null;
   cookingProgress: { currentStep: number; updatedAt: Date } | null;
   cookCount: number;
+  cookLogs: { id: number; memo: string | null; cookedAt: Date }[];
 }
 
 function toEditable(
@@ -51,7 +52,7 @@ function toEditable(
   };
 }
 
-export function RecipeDetail({ recipe, ingredients, steps, nutrition, cookingProgress, cookCount }: RecipeDetailProps) {
+export function RecipeDetail({ recipe, ingredients, steps, nutrition, cookingProgress, cookCount, cookLogs }: RecipeDetailProps) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [editData, setEditData] = useState<EditableRecipe>(() => toEditable(recipe, ingredients, steps, nutrition));
@@ -177,6 +178,34 @@ export function RecipeDetail({ recipe, ingredients, steps, nutrition, cookingPro
               {nutrition.fat != null && <div className="rounded-xl bg-cottage-surface py-2.5"><p className="font-semibold text-cottage-text">{nutrition.fat}g</p><p className="text-[0.65rem] text-cottage-text-muted">지방</p></div>}
               {nutrition.sodium != null && <div className="rounded-xl bg-cottage-surface py-2.5"><p className="font-semibold text-cottage-text">{nutrition.sodium}mg</p><p className="text-[0.65rem] text-cottage-text-muted">나트륨</p></div>}
             </div>
+          </Card>
+        )}
+
+        {/* 요리 기록 */}
+        {cookLogs.length > 0 && (
+          <Card className="border-cottage-border/60 p-4">
+            <h3 className="mb-3 font-semibold text-cottage-text">요리 기록 ({cookLogs.length}회)</h3>
+            <ul className="space-y-3">
+              {cookLogs.map((log, i) => (
+                <li key={log.id} className="flex gap-3">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-cottage-surface text-xs font-bold text-cottage-accent">
+                    {cookLogs.length - i}
+                  </span>
+                  <div className="flex-1">
+                    <p className="text-xs text-cottage-text-muted">
+                      {new Date(log.cookedAt).toLocaleDateString("ko-KR", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </p>
+                    {log.memo && (
+                      <p className="mt-1 text-sm text-cottage-text-sub">{log.memo}</p>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
           </Card>
         )}
       </main>

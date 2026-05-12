@@ -4,8 +4,8 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { CookCompleteModal } from "./CookCompleteModal";
+import { CookTimer, extractTimers } from "@/components/recipe/CookTimer";
 
 interface CookModeProps {
   recipeId: number;
@@ -113,6 +113,12 @@ export function CookMode({ recipeId, recipeTitle, steps, ingredients, initialSte
     return ingredients.filter((ing) => text.includes(ing.name));
   }, [currentStep, ingredients]);
 
+  // 현재 단계에서 타이머 추출
+  const timers = useMemo(() => {
+    const text = `${currentStep.instruction} ${currentStep.tip ?? ""}`;
+    return extractTimers(text);
+  }, [currentStep]);
+
   return (
     <div className="flex h-full flex-col bg-cottage-bg" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       <header className="bg-cottage-bg px-4 pb-3 pt-4">
@@ -191,6 +197,12 @@ export function CookMode({ recipeId, recipeTitle, steps, ingredients, initialSte
             <p className="text-center text-sm text-cottage-accent">💡 {currentStep.tip}</p>
           </div>
         )}
+
+        {/* 타이머 */}
+        {timers.map((timer, i) => (
+          <CookTimer key={`${currentIndex}-${i}`} seconds={timer.seconds} label={timer.label} />
+        ))}
+
         <p className="mt-6 text-xs text-cottage-text-muted">← 스와이프로 단계 이동 →</p>
       </main>
 

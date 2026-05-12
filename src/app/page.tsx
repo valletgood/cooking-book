@@ -4,11 +4,12 @@ import { Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { SearchBar } from "@/components/recipe/SearchBar";
+import { FilterBar } from "@/components/recipe/FilterBar";
 import { RecipeList } from "@/components/recipe/RecipeList";
 import { RecipeListLoading } from "@/components/recipe/RecipeListLoading";
 
 interface HomeProps {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; category?: string; sort?: string }>;
 }
 
 export default async function Home({ searchParams }: HomeProps) {
@@ -17,7 +18,7 @@ export default async function Home({ searchParams }: HomeProps) {
     redirect("/login");
   }
 
-  const { q } = await searchParams;
+  const { q, category, sort } = await searchParams;
 
   return (
     <div className="flex min-h-full flex-col bg-cottage-bg">
@@ -64,11 +65,17 @@ export default async function Home({ searchParams }: HomeProps) {
             <SearchBar />
           </Suspense>
         </div>
+
+        <div className="mt-2">
+          <Suspense>
+            <FilterBar />
+          </Suspense>
+        </div>
       </header>
 
       <main className="flex-1 px-4 pb-24 pt-2">
         <Suspense fallback={<RecipeListLoading />}>
-          <RecipeList userId={session.user.id!} q={q} />
+          <RecipeList userId={session.user.id!} q={q} category={category} sort={sort} />
         </Suspense>
       </main>
 

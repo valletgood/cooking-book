@@ -9,7 +9,7 @@ import {
   cookingProgress,
   cookLogs,
 } from "@/db/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, desc } from "drizzle-orm";
 import { RecipeDetail } from "./RecipeDetail";
 
 interface RecipePageProps {
@@ -34,7 +34,7 @@ export default async function RecipePage({ params }: RecipePageProps) {
     notFound();
   }
 
-  const [ingredients, steps, nutrition, progress, cookCount] =
+  const [ingredients, steps, nutrition, progress, cookCount, logs] =
     await Promise.all([
       db
         .select()
@@ -61,6 +61,11 @@ export default async function RecipePage({ params }: RecipePageProps) {
         .from(cookLogs)
         .where(eq(cookLogs.recipeId, recipeId))
         .then((rows) => rows[0]?.count ?? 0),
+      db
+        .select()
+        .from(cookLogs)
+        .where(eq(cookLogs.recipeId, recipeId))
+        .orderBy(desc(cookLogs.cookedAt)),
     ]);
 
   return (
@@ -71,6 +76,7 @@ export default async function RecipePage({ params }: RecipePageProps) {
       nutrition={nutrition}
       cookingProgress={progress}
       cookCount={cookCount}
+      cookLogs={logs}
     />
   );
 }

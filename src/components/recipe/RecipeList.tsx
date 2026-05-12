@@ -3,15 +3,41 @@ import Image from "next/image";
 import { RecipeCard } from "./RecipeCard";
 import { db } from "@/db";
 import { recipes, recipeIngredients, cookLogs } from "@/db/schema";
-import { eq, desc, sql, ilike } from "drizzle-orm";
+import { eq, desc, asc, sql, ilike } from "drizzle-orm";
 
 interface RecipeListProps {
   userId: string;
   q?: string;
+  category?: string;
+  sort?: string;
 }
 
-async function getRecipes(userId: string, q?: string) {
-  const baseWhere = eq(recipes.userId, userId);
+async function getRecipes(userId: string, q?: string, category?: string, sort?: string) {
+  const conditions = [eq(recipes.userId, userId)];
+
+  if (category && category !== "all") {
+    conditions.push(eq(recipes.category, category));
+  }
+
+  const whereClause = q
+    ? sql`${sql.join(conditions, sql` AND `)} AND (${ilike(recipes.title, `%${q}%`)} OR EXISTS (
+        SELECT 1 FROM recipe_ingredients
+        WHERE recipe_ingredients.recipe_id = ${recipes.id}
+        AND ${ilike(recipeIngredients.name, `%${q}%`)}
+      ))`
+    : sql`${sql.join(conditions, sql` AND `)}`;
+
+  let orderBy;
+  switch (sort) {
+    case "name":
+      orderBy = asc(recipes.title);
+      break;
+    case "cook_count":
+      orderBy = undefined; // 후처리로 정렬
+      break;
+    default:
+      orderBy = desc(recipes.createdAt);
+  }
 
   const recipeList = await db
     .select({
@@ -23,18 +49,10 @@ async function getRecipes(userId: string, q?: string) {
       createdAt: recipes.createdAt,
     })
     .from(recipes)
-    .where(
-      q
-        ? sql`${baseWhere} AND (${ilike(recipes.title, `%${q}%`)} OR EXISTS (
-            SELECT 1 FROM recipe_ingredients
-            WHERE recipe_ingredients.recipe_id = ${recipes.id}
-            AND ${ilike(recipeIngredients.name, `%${q}%`)}
-          ))`
-        : baseWhere,
-    )
-    .orderBy(desc(recipes.createdAt));
+    .where(whereClause)
+    .orderBy(orderBy ?? desc(recipes.createdAt));
 
-  return Promise.all(
+  const withMeta = await Promise.all(
     recipeList.map(async (recipe) => {
       const ingredients = await db
         .select({ name: recipeIngredients.name })
@@ -55,10 +73,16 @@ async function getRecipes(userId: string, q?: string) {
       };
     }),
   );
+
+  if (sort === "cook_count") {
+    withMeta.sort((a, b) => b.cookCount - a.cookCount);
+  }
+
+  return withMeta;
 }
 
-export async function RecipeList({ userId, q }: RecipeListProps) {
-  const recipeList = await getRecipes(userId, q);
+export async function RecipeList({ userId, q, category, sort }: RecipeListProps) {
+  const recipeList = await getRecipes(userId, q, category, sort);
 
   if (recipeList.length === 0) {
     return (
@@ -71,9 +95,13 @@ export async function RecipeList({ userId, q }: RecipeListProps) {
           className="h-auto"
         />
         <p className="text-center text-[0.95rem] text-cottage-text-sub">
-          {q ? `"${q}" 검색 결과가 없어요` : "아직 저장된 레시피가 없어요"}
+          {q
+            ? `"${q}" 검색 결과가 없어요`
+            : category && category !== "all"
+              ? "이 카테고리에 레시피가 없어요"
+              : "아직 저장된 레시피가 없어요"}
         </p>
-        {!q && (
+        {!q && !category && (
           <Link
             href="/recipes/new"
             className="mt-2 inline-flex h-12 items-center rounded-xl bg-cottage-text px-8 text-base font-semibold text-cottage-bg active:opacity-80"

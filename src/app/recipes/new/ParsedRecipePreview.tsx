@@ -12,11 +12,11 @@ interface ParsedRecipePreviewProps {
   onSave: () => void;
   onReset: () => void;
   saving: boolean;
-  imageUrl: string | null;
-  onImageChange: (dataUrl: string | null) => void;
+  images: string[];
+  onImagesChange: (images: string[]) => void;
 }
 
-export function ParsedRecipePreview({ recipe, onUpdate, onSave, onReset, saving, imageUrl, onImageChange }: ParsedRecipePreviewProps) {
+export function ParsedRecipePreview({ recipe, onUpdate, onSave, onReset, saving, images, onImagesChange }: ParsedRecipePreviewProps) {
   return (
     <div className="flex min-h-full flex-col bg-cottage-bg">
       <header className="sticky top-0 z-10 bg-cottage-bg/95 px-4 pb-2 pt-4 backdrop-blur-sm">
@@ -27,10 +27,7 @@ export function ParsedRecipePreview({ recipe, onUpdate, onSave, onReset, saving,
         <p className="mt-1 text-xs text-cottage-text-muted">내용을 확인하고 필요하면 수정하세요</p>
       </header>
       <main className="flex-1 space-y-3 px-4 pb-32 pt-2">
-        {/* 요리 사진 */}
-        <ImageUpload imageUrl={imageUrl} onImageChange={onImageChange} />
-
-        {/* 레시피 편집 폼 */}
+        <ImageUpload images={images} onImagesChange={onImagesChange} />
         <RecipeEditForm recipe={recipe} onUpdate={(updated) => onUpdate(updated as ParsedRecipe)} />
       </main>
       <div className="fixed inset-x-0 bottom-0 bg-cottage-bg/95 px-4 pb-6 pt-3 backdrop-blur-sm">

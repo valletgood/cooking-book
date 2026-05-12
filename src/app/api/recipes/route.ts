@@ -72,6 +72,7 @@ interface CreateRecipeBody extends ParsedRecipe {
   source_type: "url" | "image";
   source_url?: string;
   image_url?: string;
+  images?: string;
 }
 
 export async function POST(request: Request) {
@@ -98,7 +99,7 @@ export async function POST(request: Request) {
       category: body.category,
       sourceType: body.source_type,
       sourceUrl: body.source_url,
-      imageUrl: body.image_url,
+      imageUrl: body.images ?? body.image_url ?? null,
       servings: body.servings,
       prepTime: body.prep_time,
       cookTime: body.cook_time,

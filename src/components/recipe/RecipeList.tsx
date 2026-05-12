@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { RecipeCard } from "./RecipeCard";
+import { RecipeListClient } from "./RecipeListClient";
 import { db } from "@/db";
 import { recipes, recipeIngredients, cookLogs } from "@/db/schema";
 import { eq, desc, asc, sql, ilike } from "drizzle-orm";
@@ -113,19 +113,5 @@ export async function RecipeList({ userId, q, category, sort }: RecipeListProps)
     );
   }
 
-  return (
-    <div className="flex flex-col gap-3">
-      {recipeList.map((recipe) => (
-        <RecipeCard
-          key={recipe.id}
-          id={recipe.id}
-          title={recipe.title}
-          imageUrl={recipe.imageUrl}
-          category={recipe.category}
-          ingredientsSummary={recipe.ingredientsSummary}
-          cookCount={recipe.cookCount}
-        />
-      ))}
-    </div>
-  );
+  return <RecipeListClient recipes={recipeList} />;
 }

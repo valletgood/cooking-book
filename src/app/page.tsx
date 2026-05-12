@@ -7,6 +7,9 @@ import { SearchBar } from "@/components/recipe/SearchBar";
 import { FilterBar } from "@/components/recipe/FilterBar";
 import { RecipeList } from "@/components/recipe/RecipeList";
 import { RecipeListLoading } from "@/components/recipe/RecipeListLoading";
+import { db } from "@/db";
+import { recipes } from "@/db/schema";
+import { eq, sql } from "drizzle-orm";
 
 interface HomeProps {
   searchParams: Promise<{ q?: string; category?: string; sort?: string }>;
@@ -19,6 +22,12 @@ export default async function Home({ searchParams }: HomeProps) {
   }
 
   const { q, category, sort } = await searchParams;
+
+  const [recipeCount] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(recipes)
+    .where(eq(recipes.userId, session.user.id!));
+  const totalCount = recipeCount?.count ?? 0;
 
   return (
     <div className="flex min-h-full flex-col bg-cottage-bg">
@@ -34,6 +43,11 @@ export default async function Home({ searchParams }: HomeProps) {
             />
             <h1 className="font-heading text-xl font-extrabold text-cottage-text">
               내 레시피
+              {totalCount > 0 && (
+                <span className="ml-1.5 text-sm font-medium text-cottage-text-muted">
+                  ({totalCount})
+                </span>
+              )}
             </h1>
           </div>
           <div className="flex items-center gap-3">

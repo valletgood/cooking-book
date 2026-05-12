@@ -29,7 +29,7 @@ export function FilterBar() {
   return (
     <div className="space-y-2">
       {/* 카테고리 필터 */}
-      <div className="flex gap-1.5 overflow-x-auto pb-1">
+      <div className="flex gap-1.5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <button
           onClick={() => updateParams("category", "all")}
           className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${

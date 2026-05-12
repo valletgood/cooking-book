@@ -1,12 +1,16 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Button } from "@/components/ui/button";
 
 interface CookTimerProps {
   seconds: number;
   label: string;
 }
+
+const RING_SIZE = 100;
+const STROKE_WIDTH = 6;
+const RADIUS = (RING_SIZE - STROKE_WIDTH) / 2;
+const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 export function CookTimer({ seconds, label }: CookTimerProps) {
   const [remaining, setRemaining] = useState(seconds);
@@ -23,7 +27,6 @@ export function CookTimer({ seconds, label }: CookTimerProps) {
 
   useEffect(() => {
     if (!running) return;
-
     intervalRef.current = setInterval(() => {
       setRemaining((prev) => {
         if (prev <= 1) {
@@ -35,11 +38,9 @@ export function CookTimer({ seconds, label }: CookTimerProps) {
         return prev - 1;
       });
     }, 1000);
-
     return clear;
   }, [running, clear]);
 
-  // 단계 변경 시 리셋
   useEffect(() => {
     clear();
     setRemaining(seconds);
@@ -47,86 +48,105 @@ export function CookTimer({ seconds, label }: CookTimerProps) {
     setFinished(false);
   }, [seconds, clear]);
 
-  const handleStart = () => {
+  const handleTap = () => {
     if (finished) {
       setRemaining(seconds);
       setFinished(false);
+      return;
     }
-    setRunning(true);
+    if (running) {
+      clear();
+      setRunning(false);
+    } else {
+      setRunning(true);
+    }
   };
 
-  const handleStop = () => {
-    clear();
-    setRunning(false);
-  };
-
-  const handleReset = () => {
+  const handleLongPress = () => {
     clear();
     setRemaining(seconds);
     setRunning(false);
     setFinished(false);
   };
 
+  const longPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleTouchStart = () => {
+    longPressRef.current = setTimeout(handleLongPress, 600);
+  };
+  const handleTouchEnd = () => {
+    if (longPressRef.current) clearTimeout(longPressRef.current);
+  };
+
   const formatTime = (s: number) => {
     const min = Math.floor(s / 60);
     const sec = s % 60;
-    return min > 0
-      ? `${min}:${sec.toString().padStart(2, "0")}`
-      : `0:${sec.toString().padStart(2, "0")}`;
+    return `${min}:${sec.toString().padStart(2, "0")}`;
   };
 
-  return (
-    <div
-      className={`mt-4 flex items-center gap-3 rounded-xl px-4 py-3 ${
-        finished
-          ? "bg-primary/10 ring-2 ring-primary/30"
-          : "bg-cottage-surface"
-      }`}
-    >
-      <div className="flex-1">
-        <p className="text-xs text-cottage-text-muted">⏱ {label}</p>
-        <p
-          className={`font-heading text-2xl font-bold tabular-nums ${
-            finished ? "text-primary" : "text-cottage-text"
-          }`}
-        >
-          {finished ? "완료!" : formatTime(remaining)}
-        </p>
-      </div>
+  const progress = 1 - remaining / seconds;
+  const dashOffset = CIRCUMFERENCE * (1 - progress);
 
-      <div className="flex gap-2">
-        {!running && !finished && (
-          <Button
-            onClick={handleStart}
-            className="h-9 rounded-lg bg-cottage-text px-4 text-sm font-semibold text-cottage-bg hover:bg-cottage-text/90"
-          >
-            {remaining === seconds ? "시작" : "계속"}
-          </Button>
-        )}
-        {running && (
-          <Button
-            onClick={handleStop}
-            variant="outline"
-            className="h-9 rounded-lg border-cottage-border px-4 text-sm font-semibold text-cottage-text-sub"
-          >
-            일시정지
-          </Button>
-        )}
-        {(finished || (remaining !== seconds && !running)) && (
-          <Button
-            onClick={handleReset}
-            variant="outline"
-            className="h-9 rounded-lg border-cottage-border px-4 text-sm font-semibold text-cottage-text-sub"
-          >
-            초기화
-          </Button>
-        )}
-      </div>
+  return (
+    <div className="mt-5 flex flex-col items-center gap-2">
+      <p className="text-xs font-medium text-cottage-text-muted">⏱ {label}</p>
+
+      <button
+        onClick={handleTap}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
+        className="relative outline-none active:scale-95 transition-transform"
+      >
+        {/* 링 배경 */}
+        <svg width={RING_SIZE} height={RING_SIZE} className="-rotate-90">
+          <circle
+            cx={RING_SIZE / 2}
+            cy={RING_SIZE / 2}
+            r={RADIUS}
+            fill="none"
+            stroke="var(--color-cottage-warm)"
+            strokeWidth={STROKE_WIDTH}
+          />
+          {/* 진행 링 */}
+          <circle
+            cx={RING_SIZE / 2}
+            cy={RING_SIZE / 2}
+            r={RADIUS}
+            fill="none"
+            stroke={finished ? "var(--color-cottage-accent)" : "var(--color-cottage-text)"}
+            strokeWidth={STROKE_WIDTH}
+            strokeLinecap="round"
+            strokeDasharray={CIRCUMFERENCE}
+            strokeDashoffset={dashOffset}
+            className="transition-all duration-1000 ease-linear"
+          />
+        </svg>
+
+        {/* 중앙 텍스트 */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          {finished ? (
+            <span className="font-heading text-lg font-bold text-cottage-accent">완료!</span>
+          ) : (
+            <>
+              <span className="font-heading text-xl font-bold tabular-nums text-cottage-text">
+                {formatTime(remaining)}
+              </span>
+              <span className="text-[0.6rem] text-cottage-text-muted">
+                {running ? "탭하여 일시정지" : "탭하여 시작"}
+              </span>
+            </>
+          )}
+        </div>
+      </button>
+
+      {/* 꾹 눌러서 초기화 안내 — 진행 중일 때만 */}
+      {(remaining !== seconds || finished) && (
+        <p className="text-[0.6rem] text-cottage-text-muted">꾹 눌러서 초기화</p>
+      )}
     </div>
   );
 }
 
-// "5분", "10분간", "30초", "1시간" 등의 패턴에서 초 단위로 추출
 export function extractTimers(text: string): { seconds: number; label: string }[] {
   const timers: { seconds: number; label: string }[] = [];
   const regex = /(\d+)\s*(시간|분|초)\s*(간|정도|동안)?/g;

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Jua, Gowun_Dodum } from "next/font/google";
 import "./globals.css";
+import { Toaster } from "@/components/ui/sonner";
 
 const jua = Jua({
   variable: "--font-jua",
@@ -38,6 +39,7 @@ export default function RootLayout({
     >
       <body className="h-full bg-background font-sans text-foreground">
         {children}
+        <Toaster />
       </body>
     </html>
   );

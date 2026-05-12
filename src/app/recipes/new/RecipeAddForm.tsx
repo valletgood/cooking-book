@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { UrlTab } from "./UrlTab";
 import { ImageTab } from "./ImageTab";
 import { ParsedRecipePreview } from "./ParsedRecipePreview";
@@ -15,7 +16,7 @@ export function RecipeAddForm() {
   const [parsed, setParsed] = useState<ParsedRecipe | null>(null);
   const [sourceType, setSourceType] = useState<"url" | "image">("url");
   const [sourceUrl, setSourceUrl] = useState<string>("");
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [images, setImages] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
   const handleParsed = (result: ParsedRecipe, type: "url" | "image", url?: string) => {
@@ -34,14 +35,15 @@ export function RecipeAddForm() {
         ...parsed,
         source_type: sourceType,
         source_url: sourceUrl || undefined,
-        image_url: imageUrl || undefined,
+        image_url: images[0] || undefined,
+        images: images.length > 0 ? JSON.stringify(images) : undefined,
       }),
     });
     if (res.ok) {
       const data = await res.json();
       router.push(`/recipes/${data.id}`);
     } else {
-      alert("저장에 실패했습니다. 다시 시도해주세요.");
+      toast.error("저장에 실패했습니다. 다시 시도해주세요.");
       setSaving(false);
     }
   };
@@ -49,7 +51,7 @@ export function RecipeAddForm() {
   const handleReset = () => {
     setParsed(null);
     setSourceUrl("");
-    setImageUrl(null);
+    setImages([]);
   };
 
   if (parsed) {
@@ -60,8 +62,8 @@ export function RecipeAddForm() {
         onSave={handleSave}
         onReset={handleReset}
         saving={saving}
-        imageUrl={imageUrl}
-        onImageChange={setImageUrl}
+        images={images}
+        onImagesChange={setImages}
       />
     );
   }

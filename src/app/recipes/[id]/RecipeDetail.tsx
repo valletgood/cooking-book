@@ -10,6 +10,7 @@ import { CATEGORY_LABELS } from "@/lib/constants";
 import { RecipeEditForm, type EditableRecipe } from "@/components/recipe/RecipeEditForm";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Spinner } from "@/components/ui/spinner";
+import { toast } from "sonner";
 import { ImageUpload } from "@/components/recipe/ImageUpload";
 
 interface RecipeDetailProps {
@@ -56,14 +57,22 @@ export function RecipeDetail({ recipe, ingredients, steps, nutrition, cookingPro
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [editData, setEditData] = useState<EditableRecipe>(() => toEditable(recipe, ingredients, steps, nutrition));
-  const [editImageUrl, setEditImageUrl] = useState<string | null>(recipe.imageUrl);
+  const parseImages = (): string[] => {
+    if (!recipe.imageUrl) return [];
+    try {
+      const parsed = JSON.parse(recipe.imageUrl);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {}
+    return [recipe.imageUrl];
+  };
+  const [editImages, setEditImages] = useState<string[]>(parseImages);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const handleEdit = () => {
     setEditData(toEditable(recipe, ingredients, steps, nutrition));
-    setEditImageUrl(recipe.imageUrl);
+    setEditImages(parseImages());
     setEditing(true);
   };
 
@@ -72,17 +81,22 @@ export function RecipeDetail({ recipe, ingredients, steps, nutrition, cookingPro
     const res = await fetch(`/api/recipes/${recipe.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...editData, image_url: editImageUrl }),
+      body: JSON.stringify({
+        ...editData,
+        image_url: editImages.length > 0 ? editImages[0] : null,
+        images: editImages.length > 0 ? JSON.stringify(editImages) : undefined,
+      }),
     });
-    if (res.ok) { setEditing(false); router.refresh(); }
+    if (res.ok) { setEditing(false); router.refresh(); toast.success("레시피가 수정되었어요"); }
+    else { toast.error("수정에 실패했습니다"); }
     setSaving(false);
   };
 
   const handleDelete = async () => {
     setDeleting(true);
     const res = await fetch(`/api/recipes/${recipe.id}`, { method: "DELETE" });
-    if (res.ok) { router.push("/"); }
-    else { setDeleting(false); }
+    if (res.ok) { toast.success("레시피가 삭제되었어요"); router.push("/"); }
+    else { toast.error("삭제에 실패했습니다"); setDeleting(false); }
   };
 
   if (editing) {
@@ -95,7 +109,7 @@ export function RecipeDetail({ recipe, ingredients, steps, nutrition, cookingPro
           </div>
         </header>
         <main className="flex-1 space-y-3 px-4 pb-28 pt-2">
-          <ImageUpload imageUrl={editImageUrl} onImageChange={setEditImageUrl} />
+          <ImageUpload images={editImages} onImagesChange={setEditImages} />
           <RecipeEditForm recipe={editData} onUpdate={setEditData} />
         </main>
         <div className="fixed inset-x-0 bottom-0 bg-cottage-bg/95 px-4 pb-6 pt-3 backdrop-blur-sm">
@@ -124,9 +138,22 @@ export function RecipeDetail({ recipe, ingredients, steps, nutrition, cookingPro
       </header>
 
       <main className="flex-1 space-y-3 px-4 pb-28 pt-2">
-        {recipe.imageUrl && (
-          <div className="overflow-hidden rounded-xl"><img src={recipe.imageUrl} alt={recipe.title} className="h-48 w-full object-cover" /></div>
-        )}
+        {recipe.imageUrl && (() => {
+          let imgs: string[] = [];
+          try { const p = JSON.parse(recipe.imageUrl!); if (Array.isArray(p)) imgs = p; } catch {}
+          if (!imgs.length) imgs = [recipe.imageUrl!];
+          return imgs.length === 1 ? (
+            <div className="overflow-hidden rounded-xl"><img src={imgs[0]} alt={recipe.title} className="h-48 w-full object-cover" /></div>
+          ) : (
+            <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {imgs.map((url, i) => (
+                <div key={i} className="h-36 w-36 shrink-0 overflow-hidden rounded-xl">
+                  <img src={url} alt={`${recipe.title} ${i + 1}`} className="h-full w-full object-cover" />
+                </div>
+              ))}
+            </div>
+          );
+        })()}
 
         <Card className="border-cottage-border/60 p-4">
           {recipe.description && <p className="mb-3 text-sm text-cottage-text-sub">{recipe.description}</p>}

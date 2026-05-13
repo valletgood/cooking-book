@@ -56,7 +56,7 @@ export function ImageTab({ onParsed }: ImageTabProps) {
     const data = await res.json();
 
     if (!res.ok || data.error) {
-      setError(data.error ?? data.reason ?? "파싱에 실패했습니다");
+      setError(data.reason ?? "이미지에서 레시피를 분석할 수 없어요. 더 선명한 사진을 시도해주세요.");
       setLoading(false);
       return;
     }

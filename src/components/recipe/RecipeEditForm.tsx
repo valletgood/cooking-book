@@ -4,6 +4,8 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { CATEGORY_OPTIONS } from "@/lib/constants";
+import { compressImage } from "@/lib/image";
+import { StepImageEditable } from "./StepImageEditable";
 
 export interface EditableRecipe {
   title: string;
@@ -13,7 +15,7 @@ export interface EditableRecipe {
   prep_time: string;
   cook_time: string;
   ingredients: { name: string; amount: string; unit: string }[];
-  steps: { step_number: number; instruction: string; tip: string }[];
+  steps: { step_number: number; instruction: string; tip: string; image_url?: string }[];
   nutrition: {
     calories: number;
     carbohydrates: number;
@@ -161,11 +163,39 @@ export function RecipeEditForm({ recipe, onUpdate }: RecipeEditFormProps) {
           <h3 className="font-semibold text-cottage-text">요리 과정</h3>
           <button onClick={addStep} className="text-sm font-medium text-cottage-accent active:text-primary">+ 추가</button>
         </div>
+        {recipe.steps.some((s) => s.image_url) && (
+          <p className="mb-3 text-xs text-cottage-text-muted">
+            📸 단계별 사진은 AI가 자동으로 매칭한 이미지예요. 정확하지 않을 수 있으니 확인 후 수정/삭제해주세요.
+          </p>
+        )}
         <ol className="space-y-4">
           {recipe.steps.map((step, i) => (
             <li key={i} className="flex gap-3">
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-cottage-surface text-xs font-bold text-primary">{step.step_number}</span>
               <div className="flex-1 space-y-2">
+                {step.image_url ? (
+                  <StepImageEditable
+                    src={step.image_url}
+                    stepNumber={step.step_number}
+                    onRemove={() => updateStep(i, "image_url", "")}
+                    onChange={(dataUrl) => updateStep(i, "image_url", dataUrl)}
+                  />
+                ) : (
+                  <label className="flex h-8 cursor-pointer items-center gap-1 text-xs text-cottage-text-muted active:text-cottage-accent">
+                    <span>📷 사진 추가</span>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const compressed = await compressImage(file);
+                        updateStep(i, "image_url", compressed);
+                      }}
+                    />
+                  </label>
+                )}
                 <Textarea value={step.instruction} onChange={(e) => updateStep(i, "instruction", e.target.value)} rows={2} placeholder="조리 방법" className="resize-none border-cottage-border bg-white text-sm text-cottage-text focus-visible:ring-primary/30" />
                 <Input value={step.tip} onChange={(e) => updateStep(i, "tip", e.target.value)} placeholder="💡 팁 (선택)" className="border-cottage-border bg-white text-sm text-cottage-text focus-visible:ring-primary/30" />
               </div>

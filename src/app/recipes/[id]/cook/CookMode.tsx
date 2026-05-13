@@ -6,11 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CookCompleteModal } from "./CookCompleteModal";
 import { CookTimer, extractTimers } from "@/components/recipe/CookTimer";
+import { StepImage } from "@/components/recipe/StepImage";
 
 interface CookModeProps {
   recipeId: number;
   recipeTitle: string;
-  steps: { id: number; stepNumber: number; instruction: string; tip: string | null }[];
+  steps: { id: number; stepNumber: number; instruction: string; tip: string | null; imageUrl: string | null }[];
   ingredients: { id: number; name: string; amount: string | null; unit: string | null }[];
   initialStep: number;
 }
@@ -176,6 +177,11 @@ export function CookMode({ recipeId, recipeTitle, steps, ingredients, initialSte
 
       <main className="flex flex-1 flex-col items-center justify-center px-8">
         <span className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-cottage-text text-xl font-bold text-cottage-bg">{currentStep.stepNumber}</span>
+
+        {/* 단계 이미지 */}
+        {currentStep.imageUrl && (
+          <StepImage src={currentStep.imageUrl} alt={`단계 ${currentStep.stepNumber}`} className="mb-4 h-40 w-full rounded-xl object-cover" />
+        )}
 
         {/* 이 단계에서 사용되는 재료 */}
         {usedIngredients.length > 0 && (

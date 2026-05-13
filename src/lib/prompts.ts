@@ -11,7 +11,7 @@ const RECIPE_OUTPUT_SCHEMA = `## 출력 JSON 스키마
     {"name": "재료명", "amount": "분량", "unit": "단위"}
   ],
   "steps": [
-    {"step_number": 1, "instruction": "조리 설명 (자체 재구성)", "tip": "팁 (없으면 빈 문자열)"}
+    {"step_number": 1, "instruction": "조리 설명 (자체 재구성)", "tip": "팁 (없으면 빈 문자열)", "image_url": "해당 단계의 이미지 URL (없으면 빈 문자열)"}
   ],
   "nutrition": {
     "calories": 350,
@@ -54,6 +54,7 @@ const SHARED_RULES = `## 재료 파싱 규칙
 - 각 단계의 구체적인 조리 방법(불 세기, 시간, 양념 비율 등)을 원문 수준으로 상세하게 유지해라.
 - 문장은 자연스럽게 다듬되, 핵심 내용이나 세부 정보를 빼지 마라.
 - 유용한 조리 팁이 있으면 tip 필드에 넣어라 (없으면 빈 문자열)
+- 텍스트에 [IMAGE: URL] 형태의 이미지 마커가 있으면, 해당 이미지가 어떤 조리 단계에 해당하는지 판단하여 그 단계의 image_url에 넣어라. 로고, 광고, 프로필 등 요리와 무관한 이미지는 무시해라. 매칭되는 이미지가 없으면 빈 문자열로 둬라.
 
 ## 카테고리 분류
 - 반드시 다음 중 하나를 선택해라: soup_stew(국/찌개), stir_fry(볶음), grill(구이), braise(조림), steam(찜), jeon(전/부침), bibim(비빔), muchim(무침), noodle(면), rice(밥), dessert(디저트), fried(튀김), hotpot(전골/탕), side_dish(밑반찬), kimchi_pickle(김치/절임), sauce(소스/양념장), lunchbox(도시락), snack(간식), drink(음료), salad(샐러드), other(기타)

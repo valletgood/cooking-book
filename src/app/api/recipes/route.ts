@@ -122,6 +122,7 @@ export async function POST(request: Request) {
       stepNumber: step.step_number,
       instruction: step.instruction,
       tip: step.tip || null,
+      imageUrl: step.image_url || null,
     })),
   );
 

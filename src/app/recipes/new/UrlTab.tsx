@@ -23,7 +23,7 @@ export function UrlTab({ onParsed }: UrlTabProps) {
     setError(null);
     const res = await fetch("/api/recipes/parse-url", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: trimmed }) });
     const data = await res.json();
-    if (!res.ok || data.error) { setError(data.error ?? data.reason ?? "파싱에 실패했습니다"); setLoading(false); return; }
+    if (!res.ok || data.error) { setError(data.reason ?? "레시피를 분석할 수 없어요. 다른 URL을 시도해주세요."); setLoading(false); return; }
     setLoading(false);
     onParsed(data, "url", trimmed);
   };

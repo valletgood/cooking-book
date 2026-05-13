@@ -59,25 +59,40 @@ export async function POST(request: Request) {
       ? buildImageParsePrompt(files.length)
       : buildImageParsePrompt();
 
-  const response = await genai.models.generateContent({
-    model: "gemini-2.0-flash",
-    config: {
-      temperature: 0.3,
-      systemInstruction: IMAGE_PARSE_SYSTEM,
-    },
-    contents: [
-      {
-        role: "user",
-        parts: [...imageParts, { text: prompt }],
+  let response;
+  try {
+    response = await genai.models.generateContent({
+      model: "gemini-2.0-flash",
+      config: {
+        temperature: 0.3,
+        systemInstruction: IMAGE_PARSE_SYSTEM,
       },
-    ],
-  });
+      contents: [
+        {
+          role: "user",
+          parts: [...imageParts, { text: prompt }],
+        },
+      ],
+    });
+  } catch (e: unknown) {
+    const status = (e as { status?: number }).status;
+    if (status === 429) {
+      return NextResponse.json(
+        { reason: "AI 요청 한도를 초과했어요. 잠시 후 다시 시도해주세요." },
+        { status: 429 },
+      );
+    }
+    return NextResponse.json(
+      { reason: "AI 분석 중 오류가 발생했어요. 다시 시도해주세요." },
+      { status: 500 },
+    );
+  }
 
   const text = response.text ?? "";
   const jsonMatch = text.match(/\{[\s\S]*\}/);
   if (!jsonMatch) {
     return NextResponse.json(
-      { error: "PARSE_FAILED", reason: "AI 응답에서 JSON을 추출할 수 없습니다" },
+      { reason: "AI 응답에서 레시피를 추출할 수 없었어요. 더 선명한 사진을 시도해주세요." },
       { status: 422 },
     );
   }

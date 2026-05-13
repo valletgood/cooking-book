@@ -8,6 +8,7 @@ export interface ParsedStep {
   step_number: number;
   instruction: string;
   tip: string;
+  image_url?: string;
 }
 
 export interface ParsedNutrition {

@@ -142,11 +142,12 @@ export async function PUT(request: Request, { params }: RouteParams) {
   if (body.steps?.length) {
     await db.insert(recipeSteps).values(
       body.steps.map(
-        (step: { step_number: number; instruction: string; tip: string }) => ({
+        (step: { step_number: number; instruction: string; tip: string; image_url?: string }) => ({
           recipeId,
           stepNumber: step.step_number,
           instruction: step.instruction,
           tip: step.tip || null,
+          imageUrl: step.image_url || null,
         }),
       ),
     );

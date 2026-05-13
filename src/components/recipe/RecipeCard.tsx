@@ -24,40 +24,47 @@ export function RecipeCard({
   cookCount,
   onFavorite,
 }: RecipeCardProps) {
+  let thumb: string | null = null;
+  if (imageUrl) {
+    thumb = imageUrl;
+    try {
+      const p = JSON.parse(imageUrl);
+      if (Array.isArray(p) && p[0]) thumb = p[0];
+    } catch {}
+  }
+
   return (
     <div className="relative">
       <Link href={`/recipes/${id}`}>
-        <Card className="flex gap-4 border-cottage-border/60 bg-white p-4 pr-10">
+        <Card className="flex flex-row items-center gap-4 border-cottage-border/60 bg-white p-3 pr-10">
           <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-cottage-surface">
-            {imageUrl ? (() => {
-              let thumb = imageUrl;
-              try { const p = JSON.parse(imageUrl); if (Array.isArray(p) && p[0]) thumb = p[0]; } catch {}
-              return <img src={thumb} alt={title} className="h-full w-full object-cover" />;
-            })() : (
+            {thumb ? (
+              <img src={thumb} alt={title} className="h-full w-full object-cover" />
+            ) : (
               <div className="flex h-full w-full items-center justify-center text-2xl">
                 🍳
               </div>
             )}
           </div>
 
-          <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5">
-            <h3 className="truncate text-base font-semibold text-cottage-text">
+          <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
+            <h3 className="truncate text-[0.95rem] font-semibold text-cottage-text">
               {title}
             </h3>
-            <p className="truncate text-sm text-cottage-text-sub">
+            <p className="truncate text-xs text-cottage-text-sub">
               {ingredientsSummary}
             </p>
             <div className="flex items-center gap-2">
               {category && (
                 <Badge
                   variant="secondary"
-                  className="border-0 bg-cottage-surface text-cottage-accent hover:bg-cottage-surface"
+                  className="border-0 bg-cottage-surface px-1.5 py-0 text-[0.65rem] text-cottage-accent hover:bg-cottage-surface"
                 >
                   {CATEGORY_LABELS[category] ?? category}
                 </Badge>
               )}
               {cookCount > 0 && (
-                <span className="text-xs text-cottage-text-muted">
+                <span className="text-[0.65rem] text-cottage-text-muted">
                   요리 {cookCount}회
                 </span>
               )}
@@ -73,7 +80,7 @@ export function RecipeCard({
             e.stopPropagation();
             onFavorite();
           }}
-          className="absolute top-3 right-3 z-10 p-1 text-lg active:scale-125 transition-transform"
+          className="absolute top-3 right-3 z-10 p-1 text-lg transition-transform active:scale-125"
         >
           {isFavorite ? "❤️" : "🤍"}
         </button>

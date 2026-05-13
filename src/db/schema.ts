@@ -98,6 +98,7 @@ export const recipeSteps = pgTable("recipe_steps", {
   stepNumber: smallint("step_number").notNull(),
   instruction: text("instruction").notNull(),
   tip: text("tip"),
+  imageUrl: text("step_image_url"),
 });
 
 export const recipeNutrition = pgTable("recipe_nutrition", {

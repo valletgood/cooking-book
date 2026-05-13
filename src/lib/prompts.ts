@@ -85,6 +85,7 @@ export const IMAGE_PARSE_SYSTEM = `너는 요리 레시피 전문 파서이다. 
 2. 이미지에서 레시피 정보를 찾을 수 없으면 {"error": "PARSE_FAILED", "reason": "사유"}를 반환해라.
 3. 이미지의 텍스트가 흐리거나 일부만 보여도, 보이는 내용을 최대한 활용하여 추출해라.
 4. 손글씨는 OCR처럼 최대한 정확하게 읽어라.
+5. 여러 장의 이미지가 주어지면, 모든 이미지의 내용을 종합하여 하나의 레시피로 합쳐서 추출해라. 예: 재료 사진 + 조리 과정 사진 → 하나의 완성된 레시피.
 
 ${SHARED_RULES}`;
 
@@ -96,7 +97,11 @@ ${pageText}
 
 ${RECIPE_OUTPUT_SCHEMA}`;
 
-export const buildImageParsePrompt = () =>
-  `이 이미지에서 요리 레시피 정보를 분석하여 구조화된 데이터로 추출해주세요.
+export const buildImageParsePrompt = (imageCount?: number) =>
+  imageCount && imageCount > 1
+    ? `${imageCount}장의 이미지가 업로드되었습니다. 모든 이미지의 내용을 종합하여 하나의 레시피로 합쳐서 추출해주세요. 재료 사진, 조리 과정 사진 등이 나뉘어 있을 수 있습니다.
+
+${RECIPE_OUTPUT_SCHEMA}`
+    : `이 이미지에서 요리 레시피 정보를 분석하여 구조화된 데이터로 추출해주세요.
 
 ${RECIPE_OUTPUT_SCHEMA}`;

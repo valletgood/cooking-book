@@ -11,13 +11,14 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface Recipe {
   id: number;
   title: string;
   imageUrl: string | null;
   category: string | null;
+  isFavorite: boolean;
   ingredientsSummary: string;
   cookCount: number;
 }
@@ -35,6 +36,20 @@ interface RecipeListClientProps {
 export function RecipeListClient({ groups }: RecipeListClientProps) {
   const router = useRouter();
   const [deleteTarget, setDeleteTarget] = useState<Recipe | null>(null);
+  const [openGroups, setOpenGroups] = useState<string[]>(groups.map((g) => g.category));
+
+  useEffect(() => {
+    setOpenGroups((prev) => {
+      const newKeys = groups.map((g) => g.category);
+      const added = newKeys.filter((k) => !prev.includes(k));
+      return [...prev.filter((k) => newKeys.includes(k)), ...added];
+    });
+  }, [groups]);
+
+  const handleFavorite = async (recipe: Recipe) => {
+    await fetch(`/api/recipes/${recipe.id}/favorite`, { method: "PATCH" });
+    router.refresh();
+  };
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -54,7 +69,8 @@ export function RecipeListClient({ groups }: RecipeListClientProps) {
     <>
       <Accordion
         multiple
-        defaultValue={groups.map((g) => g.category)}
+        value={openGroups}
+        onValueChange={setOpenGroups}
         className="space-y-2"
       >
         {groups.map((group) => (
@@ -85,8 +101,10 @@ export function RecipeListClient({ groups }: RecipeListClientProps) {
                       title={recipe.title}
                       imageUrl={recipe.imageUrl}
                       category={recipe.category}
+                      isFavorite={recipe.isFavorite}
                       ingredientsSummary={recipe.ingredientsSummary}
                       cookCount={recipe.cookCount}
+                      onFavorite={() => handleFavorite(recipe)}
                     />
                   </SwipeableCard>
                 ))}

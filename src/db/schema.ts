@@ -74,6 +74,7 @@ export const recipes = pgTable("recipes", {
   servings: smallint("servings"),
   prepTime: varchar("prep_time", { length: 50 }),
   cookTime: varchar("cook_time", { length: 50 }),
+  isFavorite: boolean("is_favorite").default(false).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });

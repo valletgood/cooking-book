@@ -39,6 +39,7 @@ async function getRecipes(userId: string, q?: string, sort?: string) {
       imageUrl: recipes.imageUrl,
       category: recipes.category,
       sourceType: recipes.sourceType,
+      isFavorite: recipes.isFavorite,
       createdAt: recipes.createdAt,
     })
     .from(recipes)
@@ -77,6 +78,7 @@ async function getRecipes(userId: string, q?: string, sort?: string) {
 type RecipeWithMeta = Awaited<ReturnType<typeof getRecipes>>[number];
 
 function groupByCategory(list: RecipeWithMeta[]) {
+  const favorites = list.filter((r) => r.isFavorite);
   const groups: Record<string, RecipeWithMeta[]> = {};
 
   for (const recipe of list) {
@@ -85,28 +87,23 @@ function groupByCategory(list: RecipeWithMeta[]) {
     groups[cat].push(recipe);
   }
 
-  // CATEGORY_LABELS 순서대로 정렬
   const orderedKeys = Object.keys(CATEGORY_LABELS);
   const sorted: { category: string; label: string; recipes: RecipeWithMeta[] }[] = [];
 
+  // 즐겨찾기 그룹 최상단
+  if (favorites.length > 0) {
+    sorted.push({ category: "_favorite", label: "⭐ 즐겨찾기", recipes: favorites });
+  }
+
   for (const key of orderedKeys) {
     if (groups[key]) {
-      sorted.push({
-        category: key,
-        label: CATEGORY_LABELS[key],
-        recipes: groups[key],
-      });
+      sorted.push({ category: key, label: CATEGORY_LABELS[key], recipes: groups[key] });
     }
   }
 
-  // CATEGORY_LABELS에 없는 카테고리가 있으면 마지막에 추가
   for (const key of Object.keys(groups)) {
     if (!orderedKeys.includes(key)) {
-      sorted.push({
-        category: key,
-        label: key,
-        recipes: groups[key],
-      });
+      sorted.push({ category: key, label: key, recipes: groups[key] });
     }
   }
 

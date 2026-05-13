@@ -53,9 +53,27 @@ function toEditable(
   };
 }
 
+const scaleAmount = (amount: string | null, ratio: number): string => {
+  if (!amount || ratio === 1) return amount ?? "";
+  const num = parseFloat(amount.replace(/[^\d.\/]/g, ""));
+  if (isNaN(num)) return amount ?? "";
+  // 분수 처리 (예: "1/2")
+  if (amount.includes("/")) {
+    const [n, d] = amount.split("/").map(Number);
+    if (n && d) {
+      const result = (n / d) * ratio;
+      return result % 1 === 0 ? String(result) : result.toFixed(1);
+    }
+  }
+  const result = num * ratio;
+  return result % 1 === 0 ? String(result) : result.toFixed(1);
+};
+
 export function RecipeDetail({ recipe, ingredients, steps, nutrition, cookingProgress, cookCount, cookLogs }: RecipeDetailProps) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
+  const [adjustedServings, setAdjustedServings] = useState(recipe.servings ?? 1);
+  const servingsRatio = recipe.servings ? adjustedServings / recipe.servings : 1;
   const [editData, setEditData] = useState<EditableRecipe>(() => toEditable(recipe, ingredients, steps, nutrition));
   const parseImages = (): string[] => {
     if (!recipe.imageUrl) return [];
@@ -168,12 +186,33 @@ export function RecipeDetail({ recipe, ingredients, steps, nutrition, cookingPro
         </Card>
 
         <Card className="border-cottage-border/60 p-4">
-          <h3 className="mb-3 font-semibold text-cottage-text">재료</h3>
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="font-semibold text-cottage-text">재료</h3>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setAdjustedServings(Math.max(1, adjustedServings - 1))}
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-cottage-warm text-sm font-bold text-cottage-text-sub active:bg-cottage-border"
+              >
+                −
+              </button>
+              <span className="min-w-[3rem] text-center text-sm font-semibold text-cottage-text">
+                {adjustedServings}인분
+              </span>
+              <button
+                onClick={() => setAdjustedServings(adjustedServings + 1)}
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-cottage-warm text-sm font-bold text-cottage-text-sub active:bg-cottage-border"
+              >
+                +
+              </button>
+            </div>
+          </div>
           <ul className="space-y-2">
             {ingredients.map((ing) => (
               <li key={ing.id} className="flex items-center justify-between text-sm">
                 <span className="text-cottage-text">{ing.name}</span>
-                <span className="text-cottage-text-muted">{ing.amount}{ing.unit ? ` ${ing.unit}` : ""}</span>
+                <span className="text-cottage-text-muted">
+                  {scaleAmount(ing.amount, servingsRatio)}{ing.unit ? ` ${ing.unit}` : ""}
+                </span>
               </li>
             ))}
           </ul>

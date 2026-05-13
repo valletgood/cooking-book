@@ -4,7 +4,8 @@ import { genai } from "@/lib/gemini";
 import { IMAGE_PARSE_SYSTEM, buildImageParsePrompt } from "@/lib/prompts";
 import type { ParseResult } from "@/types/recipe";
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB per file
+const MAX_FILES = 5;
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 export async function POST(request: Request) {
@@ -14,31 +15,49 @@ export async function POST(request: Request) {
   }
 
   const formData = await request.formData();
-  const file = formData.get("image") as File | null;
+  const files = formData.getAll("image") as File[];
 
-  if (!file) {
+  if (!files.length) {
     return NextResponse.json(
       { error: "이미지 파일을 선택해주세요" },
       { status: 400 },
     );
   }
 
-  if (!ALLOWED_TYPES.includes(file.type)) {
+  if (files.length > MAX_FILES) {
     return NextResponse.json(
-      { error: "JPG, PNG, WebP 형식만 지원합니다" },
+      { error: `이미지는 최대 ${MAX_FILES}장까지 가능합니다` },
       { status: 400 },
     );
   }
 
-  if (file.size > MAX_FILE_SIZE) {
-    return NextResponse.json(
-      { error: "파일 크기는 10MB 이하만 가능합니다" },
-      { status: 400 },
-    );
+  for (const file of files) {
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      return NextResponse.json(
+        { error: "JPG, PNG, WebP 형식만 지원합니다" },
+        { status: 400 },
+      );
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { error: "각 파일 크기는 10MB 이하만 가능합니다" },
+        { status: 400 },
+      );
+    }
   }
 
-  const buffer = await file.arrayBuffer();
-  const base64 = Buffer.from(buffer).toString("base64");
+  const imageParts = await Promise.all(
+    files.map(async (file) => {
+      const buffer = await file.arrayBuffer();
+      const base64 = Buffer.from(buffer).toString("base64");
+      return { inlineData: { mimeType: file.type, data: base64 } };
+    }),
+  );
+
+  const prompt =
+    files.length > 1
+      ? buildImageParsePrompt(files.length)
+      : buildImageParsePrompt();
 
   const response = await genai.models.generateContent({
     model: "gemini-2.0-flash",
@@ -49,10 +68,7 @@ export async function POST(request: Request) {
     contents: [
       {
         role: "user",
-        parts: [
-          { inlineData: { mimeType: file.type, data: base64 } },
-          { text: buildImageParsePrompt() },
-        ],
+        parts: [...imageParts, { text: prompt }],
       },
     ],
   });

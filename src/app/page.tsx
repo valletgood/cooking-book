@@ -6,6 +6,7 @@ import Link from "next/link";
 import { SearchBar } from "@/components/recipe/SearchBar";
 import { RecipeList } from "@/components/recipe/RecipeList";
 import { RecipeListLoading } from "@/components/recipe/RecipeListLoading";
+import { OnboardingGuide } from "@/components/recipe/OnboardingGuide";
 import { db } from "@/db";
 import { recipes } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
@@ -92,6 +93,8 @@ export default async function Home({ searchParams }: HomeProps) {
       >
         +
       </Link>
+
+      <OnboardingGuide />
     </div>
   );
 }
